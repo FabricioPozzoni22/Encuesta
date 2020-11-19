@@ -47,6 +47,19 @@ def get_all_users():
 
 	return jsonify({'users':output})
 
+@app.route('/user/<public_id>',methods=['GET'])
+def get_one_user(public_id):
+
+	if not user:
+		return jsonify({'message': 'Usuario no encontrado'})
+
+	user_data={}
+	user_data['public_id']=user.public_id
+	user_data['name']=user.name
+	user_data['password']=user.password
+	user_data['admin']=user.admin
+
+	return jsonify({'user':user_data})
 
 if __name__ == '__main__':
 	app.run(debug=True)
