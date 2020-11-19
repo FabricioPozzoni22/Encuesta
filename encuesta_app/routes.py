@@ -1,50 +1,12 @@
-from flask import Flask,request,jsonify,make_response
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.dialects.postgresql import JSON
+from flask import request,jsonify,make_response
+from encuesta_app import app
 import uuid 
 from werkzeug.security import generate_password_hash,check_password_hash
+from sqlalchemy.dialects.postgresql import JSON
 import jwt
 import datetime
 from functools import wraps
-from flask_apscheduler import APScheduler
-
-app=Flask(__name__)
-scheduler=APScheduler()
-
-app.config['SECRET_KEY']='secret'
-app.config['SQLALCHEMY_DATABASE_URI']='mysql+mysqlconnector://root:''@localhost/encuesta'
-
-db=SQLAlchemy(app)
-
-class User(db.Model):
-	__tablename__ = 'users'
-	id= db.Column(db.Integer,primary_key=True)
-	public_id=db.Column(db.String(50),unique=True)
-	name=db.Column(db.String(50))
-	password=db.Column(db.String(80))
-	admin=db.Column(db.Boolean)
-
-class Questionary(db.Model):
-	__tablename__='questionary'
-	id=db.Column(db.Integer,primary_key=True)
-	user_public_id=db.Column(db.String(50))
-	quest_ans=db.Column(JSON)
-	questionary_solved=db.relationship('Solved_questionary',backref='questionary')
-
-class Solved_questionary(db.Model):
-	__tablename__='solved_questionary'
-	@classmethod
-	def eliminar_expirado(cls):
-		expiration_time = 15
-		limit = datetime.datetime.now() - datetime.timedelta(minutes=expiration_time)
-		cls.query.filter(cls.datetime <= limit).delete()
-		db.session.commit()
-	
-	id=db.Column(db.Integer,primary_key=True)
-	questionary_id=db.Column(db.Integer,db.ForeignKey('questionary.id'))
-	answers=db.Column(JSON)
-	datetime=db.Column(db.DateTime)	
-
+from encuesta_app.models import User,Questionary,Solved_questionary
 
 
 def eliminar_encuestas_expiradas():
@@ -259,8 +221,3 @@ def login():
 		token=jwt.encode({'public_id':user.public_id,'exp': datetime.datetime.utcnow()+ datetime.timedelta(minutes=60)},app.config['SECRET_KEY'])
 		return jsonify({'token':token.decode('UTF-8')})
 	return make_response('Could not verify',401,{'WWW-Authenticate':'Basic realm="Login required"'})
-
-if __name__ == '__main__':
-	scheduler.add_job(id='Scheduled task',func=eliminar_encuestas_expiradas, trigger='interval',seconds=5)
-	scheduler.start()
-	app.run(debug=True)
