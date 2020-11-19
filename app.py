@@ -59,6 +59,9 @@ def create_user(current_user):
 @token_required	
 def get_all_users(current_user):
 
+	if not current_user.admin:
+		return jsonify({'message':'No se puede realizar esta funcion sin permisos'})
+
 	users=User.query.all()
 	output= []
 
@@ -76,6 +79,9 @@ def get_all_users(current_user):
 @token_required	
 def get_one_user(current_user,public_id):
 
+	if not current_user.admin:
+		return jsonify({'message':'No se puede realizar esta funcion sin permisos'})
+
 	if not user:
 		return jsonify({'message': 'Usuario no encontrado'})
 
@@ -91,6 +97,8 @@ def get_one_user(current_user,public_id):
 @token_required	
 def promote_user(current_user,public_id):
 
+	if not current_user.admin:
+		return jsonify({'message':'No se puede realizar esta funcion sin permisos'})
 
 	user=User.query.filter_by(public_id=public_id).first()
 
@@ -105,6 +113,9 @@ def promote_user(current_user,public_id):
 @app.route('/user/<public_id>',methods=['DELETE'])
 @token_required	
 def delete_user(current_user,public_id):
+
+	if not current_user.admin:
+		return jsonify({'message':'No se puede realizar esta funcion sin permisos'})
 
 	user=User.query.filter_by(public_id=public_id).first()
 
