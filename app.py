@@ -108,7 +108,7 @@ def solve_questionary():
 			if quest_ans['question']==quest_ans_data['question']:
 				solved_questionary={}
 				answer=quest_ans_data['answer']
-				qty_answer=len(quest_ans_data['answer'])
+				qty_answer=len(quest_ans['answer'])
 				if  answer<1 or answer>qty_answer:
 					return jsonify({'message':'Respuesta invalida'})
 
@@ -117,7 +117,7 @@ def solve_questionary():
 				output.append(solved_questionary)
 
 	
-	new_solved_questionary=Solved_questionary(questionary_id=questionary_id,answers=output,datetime=datetime.date.now())
+	new_solved_questionary=Solved_questionary(questionary_id=questionary_id,answers=output,datetime=datetime.datetime.now())
 	db.session.add(new_solved_questionary)
 	db.session.commit()
 
@@ -182,6 +182,8 @@ def get_one_user(current_user,public_id):
 	if not current_user.admin:
 		return jsonify({'message':'No se puede realizar esta funcion sin permisos'})
 
+	user=User.query.filter_by(public_id=public_id).first()
+
 	if not user:
 		return jsonify({'message': 'Usuario no encontrado'})
 
@@ -222,7 +224,7 @@ def delete_user(current_user,public_id):
 	if not user:
 		return jsonify({'message': 'Usuario no encontrado'})
 
-	db.session.delete()
+	db.session.delete(user)
 	db.session.commit()
 
 	return jsonify({'message':'Usuario eliminado'})
