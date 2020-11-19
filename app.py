@@ -6,8 +6,10 @@ from werkzeug.security import generate_password_hash,check_password_hash
 import jwt
 import datetime
 from functools import wraps
+from flask_apscheduler import APScheduler
 
 app=Flask(__name__)
+scheduler=APScheduler()
 
 app.config['SECRET_KEY']='secret'
 app.config['SQLALCHEMY_DATABASE_URI']='mysql+mysqlconnector://root:''@localhost/encuesta'
@@ -31,10 +33,22 @@ class Questionary(db.Model):
 
 class Solved_questionary(db.Model):
 	__tablename__='solved_questionary'
+	@classmethod
+	def eliminar_expirado(cls):
+		expiration_time = 15
+		limit = datetime.datetime.now() - datetime.timedelta(minutes=expiration_time)
+		cls.query.filter(cls.datetime <= limit).delete()
+		db.session.commit()
+	
 	id=db.Column(db.Integer,primary_key=True)
 	questionary_id=db.Column(db.Integer,db.ForeignKey('questionary.id'))
 	answers=db.Column(JSON)
 	datetime=db.Column(db.DateTime)	
+
+
+
+def eliminar_encuestas_expiradas():
+	Solved_questionary.eliminar_expirado()
 
 def token_required(f):
 	@wraps(f)
@@ -127,7 +141,7 @@ def solve_questionary():
 @token_required
 def get_solved_questioaries(current_user):
 
-	if not current_user.admin: #funcion?
+	if not current_user.admin: 
 		return jsonify({'message':'No se puede realizar esta funcion sin permisos'})
 
 	solved_questionaries=Solved_questionary.query.all()
@@ -247,4 +261,6 @@ def login():
 	return make_response('Could not verify',401,{'WWW-Authenticate':'Basic realm="Login required"'})
 
 if __name__ == '__main__':
+	scheduler.add_job(id='Scheduled task',func=eliminar_encuestas_expiradas, trigger='interval',seconds=5)
+	scheduler.start()
 	app.run(debug=True)
