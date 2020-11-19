@@ -21,9 +21,31 @@ class User(db.Model):
 	password=db.Column(db.String(80))
 	admin=db.Column(db.Boolean)
 
+def token_required(f):
+	@wraps(f)
+	def decorated(*args,**kwargs):
+		token=None
+
+		if 'x-access-token' in request.headers:
+			token=request.headers['x-access-token']
+
+		if not token:
+			return jsonify({'message':'Token invalido'}),401
+
+		try:
+			data= jwt.decode(token,app.config['SECRET_KEY'])
+			current_user=User.query.filter_by(public_id=data['public_id']).first()
+		except:
+			return ({'message':'Token invalido'}),401
+
+		return f(current_user,*args,**kwargs)	
+
+	return decorated
 
 @app.route('/user',methods=['POST'])
-def create_user():
+@token_required
+def create_user(current_user):
+
 	data=request.get_json()
 	hashed_password=generate_password_hash(data['password'],method='sha256')
 	new_user=User(public_id=str(uuid.uuid4()),name=data['name'],password=hashed_password,admin=False)
@@ -32,8 +54,10 @@ def create_user():
 
 	return jsonify({'message':'Nuevo usuario creado'})
 
+
 @app.route('/user',methods=['GET'])
-def get_all_users():
+@token_required	
+def get_all_users(current_user):
 
 	users=User.query.all()
 	output= []
@@ -49,7 +73,8 @@ def get_all_users():
 	return jsonify({'users':output})
 
 @app.route('/user/<public_id>',methods=['GET'])
-def get_one_user(public_id):
+@token_required	
+def get_one_user(current_user,public_id):
 
 	if not user:
 		return jsonify({'message': 'Usuario no encontrado'})
@@ -63,7 +88,8 @@ def get_one_user(public_id):
 	return jsonify({'user':user_data})
 
 @app.route('/user/<public_id>',methods=['PUT'])
-def promote_user(public_id):
+@token_required	
+def promote_user(current_user,public_id):
 
 
 	user=User.query.filter_by(public_id=public_id).first()
@@ -77,7 +103,8 @@ def promote_user(public_id):
 	return jsonify({'message':'Usuario promovido'})
 
 @app.route('/user/<public_id>',methods=['DELETE'])
-def delete_user(public_id):
+@token_required	
+def delete_user(current_user,public_id):
 
 	user=User.query.filter_by(public_id=public_id).first()
 
