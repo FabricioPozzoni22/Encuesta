@@ -31,5 +31,22 @@ def create_user():
 
 	return jsonify({'message':'Nuevo usuario creado'})
 
+@app.route('/user',methods=['GET'])
+def get_all_users():
+
+	users=User.query.all()
+	output= []
+
+	for user in users:
+		user_data={} 
+		user_data['public_id']=user.public_id
+		user_data['name']=user.name
+		user_data['password']=user.password
+		user_data['admin']=user.admin
+		output.append(user_data)
+
+	return jsonify({'users':output})
+
+
 if __name__ == '__main__':
 	app.run(debug=True)
