@@ -75,6 +75,18 @@ def promote_user(public_id):
 
 	return jsonify({'message':'Usuario promovido'})
 
+@app.route('/user/<public_id>',methods=['DELETE'])
+def delete_user(public_id):
+
+	user=User.query.filter_by(public_id=public_id).first()
+
+	if not user:
+		return jsonify({'message': 'Usuario no encontrado'})
+
+	db.session.delete()
+	db.session.commit()
+
+	return jsonify({'message':'Usuario eliminado'})
 
 if __name__ == '__main__':
 	app.run(debug=True)
