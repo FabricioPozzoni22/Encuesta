@@ -1,5 +1,6 @@
 from flask import Flask,request,jsonify,make_response
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.dialects.postgresql import JSON
 import uuid 
 from werkzeug.security import generate_password_hash,check_password_hash
 import jwt
@@ -20,6 +21,20 @@ class User(db.Model):
 	name=db.Column(db.String(50))
 	password=db.Column(db.String(80))
 	admin=db.Column(db.Boolean)
+
+class Questionary(db.Model):
+	__tablename__='questionary'
+	id=db.Column(db.Integer,primary_key=True)
+	user_public_id=db.Column(db.String(50))
+	quest_ans=db.Column(JSON)
+	questionary_solved=db.relationship('Solved_questionary',backref='questionary')
+
+class Solved_questionary(db.Model):
+	__tablename__='solved_questionary'
+	id=db.Column(db.Integer,primary_key=True)
+	questionary_id=db.Column(db.Integer,db.ForeignKey('questionary.id'))
+	answers=db.Column(JSON)
+	datetime=db.Column(db.DateTime)	
 
 def token_required(f):
 	@wraps(f)
