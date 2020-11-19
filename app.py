@@ -123,6 +123,25 @@ def solve_questionary():
 
 	return jsonify({'message':'Encuesta completa'})
 
+@app.route('/get/encuestas_resueltas',methods=['GET'])
+@token_required
+def get_solved_questioaries(current_user):
+
+	if not current_user.admin: #funcion?
+		return jsonify({'message':'No se puede realizar esta funcion sin permisos'})
+
+	solved_questionaries=Solved_questionary.query.all()
+	output= []
+
+	for questionary in solved_questionaries:
+		questionary_data={}
+		questionary_data['questionary_id']=questionary.questionary_id
+		questionary_data['answers']=questionary.answers
+		questionary_data['datetime']=questionary.datetime
+		output.append(questionary_data)
+
+	return jsonify({'solved_questionaries':output})
+
 @app.route('/user',methods=['POST'])
 @token_required
 def create_user(current_user):
