@@ -57,6 +57,24 @@ def token_required(f):
 
 	return decorated
 
+@app.route('/post/encuestas/<public_id>',methods=['POST'])
+@token_required
+def create_questionary(current_user,public_id):
+
+	data=request.get_json()
+	
+	for data_quest in data['questionary']:
+		cantidad_respuestas=len(data_quest['answer'])
+		if cantidad_respuestas>4 or cantidad_respuestas<1:
+			return jsonify({'message':'Cantidad de respuestas invalida'}) 
+
+
+	new_questionary=Questionary(user_public_id=public_id,quest_ans=data)
+	db.session.add(new_questionary)
+	db.session.commit()
+
+	return jsonify({'message':'Nuevo cuestionario creado'})
+
 @app.route('/user',methods=['POST'])
 @token_required
 def create_user(current_user):
