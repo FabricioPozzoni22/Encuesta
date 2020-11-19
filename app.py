@@ -61,5 +61,20 @@ def get_one_user(public_id):
 
 	return jsonify({'user':user_data})
 
+@app.route('/user/<public_id>',methods=['PUT'])
+def promote_user(public_id):
+
+
+	user=User.query.filter_by(public_id=public_id).first()
+
+	if not user:
+		return jsonify({'message': 'Usuario no encontrado'})
+
+	user.admin=True
+	db.session.commit()
+
+	return jsonify({'message':'Usuario promovido'})
+
+
 if __name__ == '__main__':
 	app.run(debug=True)
