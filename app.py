@@ -93,6 +93,35 @@ def get_questionaries(current_user,public_id):
 
 	return jsonify({'questionaries':output})
 
+@app.route('/post/encuesta',methods=['POST'])
+def solve_questionary():
+
+	data=request.get_json()
+	questionary_id=data['questionary_id']
+	questionary_data=data['questionary']
+	questionary=Questionary.query.filter_by(id=questionary_id).first()
+	output=[]
+
+
+	for quest_ans_data in questionary_data:
+		for quest_ans in questionary.quest_ans["questionary"]:
+			if quest_ans['question']==quest_ans_data['question']:
+				solved_questionary={}
+				answer=quest_ans_data['answer']
+				qty_answer=len(quest_ans_data['answer'])
+				if  answer<1 or answer>qty_answer:
+					return jsonify({'message':'Respuesta invalida'})
+
+				solved_questionary['question']=quest_ans['question']
+				solved_questionary['answer']=answer
+				output.append(solved_questionary)
+
+	
+	new_solved_questionary=Solved_questionary(questionary_id=questionary_id,answers=output,datetime=datetime.date.now())
+	db.session.add(new_solved_questionary)
+	db.session.commit()
+
+	return jsonify({'message':'Encuesta completa'})
 
 @app.route('/user',methods=['POST'])
 @token_required
