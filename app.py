@@ -75,6 +75,25 @@ def create_questionary(current_user,public_id):
 
 	return jsonify({'message':'Nuevo cuestionario creado'})
 
+@app.route('/get/encuestas/<public_id>',methods=['GET'])
+@token_required
+def get_questionaries(current_user,public_id):
+
+	if not current_user.admin: 
+		return jsonify({'message':'No se puede realizar esta funcion sin permisos'})
+
+	questionaries=Questionary.query.all()
+	output= []
+
+	for questionary in questionaries:
+		questionary_data={}
+		questionary_data['user_public_id']=questionary.user_public_id
+		questionary_data['quest_ans']=questionary.quest_ans
+		output.append(questionary_data)
+
+	return jsonify({'questionaries':output})
+
+
 @app.route('/user',methods=['POST'])
 @token_required
 def create_user(current_user):
